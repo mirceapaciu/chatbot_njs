@@ -1,6 +1,12 @@
 import { getSupabaseAdmin } from '../supabase';
 import { Document } from '@/types';
 
+interface MatchDocumentRow {
+  id: Document['id'];
+  content: Document['content'];
+  metadata: Document['metadata'];
+}
+
 export class VectorStoreService {
   private supabase;
 
@@ -47,7 +53,7 @@ export class VectorStoreService {
       throw new Error(`Similarity search failed: ${error.message}`);
     }
 
-    return data.map((row: any) => ({
+    return data.map((row: MatchDocumentRow) => ({
       id: row.id,
       content: row.content,
       metadata: row.metadata,
