@@ -1,0 +1,35 @@
+root_directory: data/original
+
+sources:
+  - id: imf_weo
+    name: "IMF World Economic Outlook"
+    url: "https://www.imf.org/en/Publications/WEO"
+    files:
+      - name: "imf-weo-apr-2025.pdf"
+        url: "https://www.imf.org/-/media/Files/Publications/WEO/2025/April/English/text.ashx"
+        type: "pdf"
+        year: 2025
+      - name: "imf-weo-oct-2024.pdf"
+        url: "https://www.imf.org/-/media/Files/Publications/WEO/2024/October/English/text.ashx"
+        type: "pdf"
+        year: 2024
+  - id: oecd
+    name: "OECD Economic Outlook"
+    url: "https://www.oecd.org/en/publications.html"
+    files:
+      - name: "oecd-economic-outlook-interim-report-september-2025-en.pdf"
+        url: "https://www.oecd.org/content/dam/oecd/en/publications/reports/2025/09/oecd-economic-outlook-interim-report-september-2025_ae3d418b/67b10c01-en.pdf"
+        type: "pdf"
+        year: 2025
+      - name: "oecd-economic-outlook-volume-2025-issue-1-202506-en.pdf"
+        url: "https://www.oecd.org/content/dam/oecd/en/publications/reports/2025/06/oecd-economic-outlook-volume-2025-issue-1_1fd979a8/83363382-en.pdf"
+        type: "pdf"
+        year: 2025
+  - id: oecd_cpi_monthly
+    name: "OECD CPI Monthly"
+    url: "https://data-explorer.oecd.org/vis?fs[0]=Topic%2C1%7CEconomy%23ECO%23%7CPrices%23ECO_PRI%23&pg=0&fc=Measure&bp=true&snb=30&vw=tb&df[ds]=dsDisseminateFinalDMZ&df[id]=DSD_PRICES%40DF_PRICES_ALL&df[ag]=OECD.SDD.TPS&df[vs]=1.0&dq=.M.N.CPI.._T.N.GY%2B_Z&lom=LASTNPERIODS&lo=24&to[TIME_PERIOD]=false"
+    files:
+      - name: "oecd-prices-202309-202509.csv"
+        url: "https://data-explorer.oecd.org/vis?fs[0]=Topic%2C1%7CEconomy%23ECO%23%7CPrices%23ECO_PRI%23&pg=0&fc=Measure&bp=true&snb=30&vw=tb&df[ds]=dsDisseminateFinalDMZ&df[id]=DSD_PRICES%40DF_PRICES_ALL&df[ag]=OECD.SDD.TPS&df[vs]=1.0&dq=.M.N.CPI.._T.N.GY%2B_Z&lom=LASTNPERIODS&lo=24&to[TIME_PERIOD]=false"
+        type: "table"
+        year: 2025
