@@ -1,7 +1,7 @@
 'use client';
 
 import { FileStatus } from '@/types';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface StatusPanelProps {
   onLoadClick: () => void;
@@ -14,8 +14,10 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, r
   const [isLoaded, setIsLoaded] = useState(false);
   const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const initialFetchDoneRef = useRef(false);
+  const lastRefreshTokenRef = useRef<number | undefined>(undefined);
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -33,11 +35,34 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, r
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    const tokenValue = refreshToken ?? 0;
+
+    if (!initialFetchDoneRef.current) {
+      initialFetchDoneRef.current = true;
+      lastRefreshTokenRef.current = tokenValue;
+      fetchStatus();
+      return;
+    }
+
+    if (lastRefreshTokenRef.current === tokenValue) {
+      return;
+    }
+
+    lastRefreshTokenRef.current = tokenValue;
     fetchStatus();
-  }, [refreshToken]);
+  }, [fetchStatus, refreshToken]);
+
+  useEffect(() => {
+    const handleDbChange = () => {
+      fetchStatus();
+    };
+
+    window.addEventListener('knowledge-db-changed', handleDbChange);
+    return () => window.removeEventListener('knowledge-db-changed', handleDbChange);
+  }, [fetchStatus]);
 
   return (
     <div className="w-full h-full bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">

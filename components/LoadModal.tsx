@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileStatus, LoadStats } from '@/types';
 
 interface LoadModalProps {
@@ -20,14 +20,16 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
     message: string;
   } | null>(null);
   const [didChange, setDidChange] = useState(false);
+  const didChangeRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
     setDidChange(false);
+    didChangeRef.current = false;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !loading) {
-        onClose(didChange);
+        onClose(didChangeRef.current);
       }
     };
 
@@ -127,6 +129,8 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
           message: `Successfully loaded ${stats.loaded.length} file(s)`,
         });
         setDidChange(true);
+        didChangeRef.current = true;
+        window.dispatchEvent(new CustomEvent('knowledge-db-changed'));
       } else {
         setFeedback({
           type: 'warning',
@@ -177,6 +181,8 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
         message: 'All loaded files were deleted and statuses were reset.',
       });
       setDidChange(true);
+      didChangeRef.current = true;
+      window.dispatchEvent(new CustomEvent('knowledge-db-changed'));
     } catch (error) {
       setFeedback({
         type: 'error',
@@ -242,7 +248,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
         </div>
 
         <button
-          onClick={() => onClose(didChange)}
+          onClick={() => onClose(didChangeRef.current)}
           disabled={loading}
           className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
