@@ -36,9 +36,6 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick }:
 
   useEffect(() => {
     fetchStatus();
-    // Refresh every 10 seconds
-    const interval = setInterval(fetchStatus, 10000);
-    return () => clearInterval(interval);
   }, []);
 
   return (
