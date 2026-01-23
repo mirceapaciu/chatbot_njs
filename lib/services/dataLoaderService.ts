@@ -205,7 +205,7 @@ export class DataLoaderService {
         },
       });
 
-      if ((i - 1) % 100 === 0) {
+      if ((i + 1) % 100 === 0) {
         console.log(`Processed ${i+1}/${chunks.length} chunks for ${file.name}`);
       }
     }
