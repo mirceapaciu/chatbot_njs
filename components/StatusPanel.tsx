@@ -182,11 +182,8 @@ export default function StatusPanel({
   }, [fetchStatus]);
 
   return (
-    <div className="w-full h-full bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
-      <h2 className="text-xl font-bold mb-4">Knowledge Base</h2>
-      
+    <div className="w-full h-full bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">      
       <div className="mb-4">
-        <p className="font-semibold mb-2">Status:</p>
         <div className="flex items-center gap-2">
           <span className={`inline-block w-3 h-3 rounded-full ${isLoaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
           <span className="text-sm">{isLoaded ? 'DB is loaded' : 'DB is empty'}</span>
