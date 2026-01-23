@@ -37,3 +37,6 @@ export const CITATION_PATTERN = /\[([^,\]]+),\s*p\.(\d+)\]/g;
 
 export const EMBEDDING_MODEL = 'sentence-transformers/all-MiniLM-L6-v2';
 export const EMBEDDING_DIMENSION = 384;
+
+export const CHUNK_SIZE = 1000;
+export const CHUNK_OVERLAP = 200;

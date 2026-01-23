@@ -6,6 +6,7 @@ import Papa from 'papaparse';
 import path from 'path';
 import fs from 'fs/promises';
 import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import { CHUNK_OVERLAP, CHUNK_SIZE } from '../config';
 
 export type LoadPolicy = 'missing_only' | 'all';
 
@@ -182,7 +183,7 @@ export class DataLoaderService {
       : await fs.readFile(filePath, 'utf-8');
     
     // Chunk the content (simplified version - you may want to use a proper chunking library)
-    const chunks = this.chunkText(content, 1000, 200);
+    const chunks = this.chunkText(content, CHUNK_SIZE, CHUNK_OVERLAP);
 
     await this.sqlStore.updateStatus(
       source.id,
