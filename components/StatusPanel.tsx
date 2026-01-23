@@ -8,9 +8,22 @@ interface StatusPanelProps {
   onExportClick: () => void;
   onHelpClick: () => void;
   refreshToken?: number;
+  showLoadButton?: boolean;
+  showFileTable?: boolean;
+  showExportButton?: boolean;
+  showHelpButton?: boolean;
 }
 
-export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, refreshToken }: StatusPanelProps) {
+export default function StatusPanel({
+  onLoadClick,
+  onExportClick,
+  onHelpClick,
+  refreshToken,
+  showLoadButton = true,
+  showFileTable = true,
+  showExportButton = true,
+  showHelpButton = true,
+}: StatusPanelProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,54 +95,78 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, r
         </div>
       )}
 
-      {loading ? (
-        <p className="text-sm text-gray-500">Loading status...</p>
-      ) : statuses.length > 0 ? (
-        <div className="mb-4">
-          <p className="font-semibold mb-2 text-sm">File Status:</p>
-          <div className="space-y-2 max-h-96 overflow-y-auto">
-            {statuses.map((status, index) => (
-              <div key={index} className="text-xs bg-white p-2 rounded border border-gray-200">
-                <p className="font-semibold">{status.data_source_id}</p>
-                <p className="text-gray-600">{status.file_name}</p>
-                <p className="text-gray-500">Type: {status.target}</p>
-                <p className={`mt-1 ${
-                  status.status === 'loaded' ? 'text-green-600' :
-                  status.status === 'failed' ? 'text-red-600' :
-                  status.status === 'loading' ? 'text-blue-600' :
-                  'text-gray-600'
-                }`}>
-                  Status: {status.status}
-                </p>
-              </div>
-            ))}
+      {showFileTable && (
+        loading ? (
+          <p className="text-sm text-gray-500">Loading status...</p>
+        ) : statuses.length > 0 ? (
+          <div className="mb-4">
+            <p className="font-semibold mb-2 text-sm">Loaded Files:</p>
+            <div className="max-h-96 overflow-y-auto border border-gray-200 rounded bg-white">
+              <table className="w-full text-xs">
+                <thead className="sticky top-0 bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-semibold">Source</th>
+                    <th className="text-left px-3 py-2 font-semibold">File</th>
+                    <th className="text-left px-3 py-2 font-semibold">Target</th>
+                    <th className="text-left px-3 py-2 font-semibold">Status</th>
+                    <th className="text-left px-3 py-2 font-semibold">Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {statuses.map((status, index) => (
+                    <tr key={index} className="border-t border-gray-100">
+                      <td className="px-3 py-2 font-semibold text-gray-800">{status.data_source_id}</td>
+                      <td className="px-3 py-2 text-gray-700">{status.file_name}</td>
+                      <td className="px-3 py-2 text-gray-600">{status.target}</td>
+                      <td className={`px-3 py-2 font-semibold ${
+                        status.status === 'loaded' ? 'text-green-600' :
+                        status.status === 'failed' ? 'text-red-600' :
+                        status.status === 'loading' ? 'text-blue-600' :
+                        'text-gray-600'
+                      }`}>
+                        {status.status}
+                      </td>
+                      <td className="px-3 py-2 text-gray-500">
+                        {new Date(status.updated_at).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      ) : (
-        <p className="text-sm text-gray-500 mb-4">No load activity recorded yet.</p>
+        ) : (
+          <p className="text-sm text-gray-500 mb-4">No load activity recorded yet.</p>
+        )
       )}
 
       <div className="space-y-2">
-        <button
-          onClick={onLoadClick}
-          className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-semibold"
-        >
-          Load DB
-        </button>
-        
-        <button
-          onClick={onExportClick}
-          className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
-        >
-          📥 Export Chat History
-        </button>
-        
-        <button
-          onClick={onHelpClick}
-          className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
-        >
-          ❓ Help & Examples
-        </button>
+        {showLoadButton && (
+          <button
+            onClick={onLoadClick}
+            className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-semibold"
+          >
+            Load DB
+          </button>
+        )}
+
+        {showExportButton && (
+          <button
+            onClick={onExportClick}
+            className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
+          >
+            📥 Export Chat History
+          </button>
+        )}
+
+        {showHelpButton && (
+          <button
+            onClick={onHelpClick}
+            className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
+          >
+            ❓ Help & Examples
+          </button>
+        )}
       </div>
     </div>
   );

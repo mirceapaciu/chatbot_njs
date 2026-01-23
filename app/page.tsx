@@ -20,6 +20,7 @@ export default function Home() {
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [statusRefreshToken, setStatusRefreshToken] = useState(0);
+  const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -113,74 +114,126 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen bg-white">
-      {/* Sidebar */}
-      <div className="w-80 flex-shrink-0">
-        <StatusPanel
-          onLoadClick={() => setShowLoadModal(true)}
-          onExportClick={handleExport}
-          onHelpClick={() => setShowHelpModal(true)}
-          refreshToken={statusRefreshToken}
-        />
+    <div className="flex flex-col h-screen bg-white">
+      {/* Header */}
+      <header className="bg-blue-600 text-white p-4 shadow-md">
+        <h1 className="text-2xl font-bold">🤖 Financial Insights Chatbot</h1>
+        <p className="text-sm text-blue-100 mt-1">
+          Ask questions about the global economic outlook
+        </p>
+      </header>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 bg-white">
+        <div className="max-w-6xl mx-auto flex">
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+              activeTab === 'chat'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Chat
+          </button>
+          <button
+            onClick={() => setActiveTab('knowledge')}
+            className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${
+              activeTab === 'knowledge'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-800'
+            }`}
+          >
+            Knowledge DB
+          </button>
+        </div>
       </div>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="bg-blue-600 text-white p-4 shadow-md">
-          <h1 className="text-2xl font-bold">🤖 Financial Insights Chatbot</h1>
-          <p className="text-sm text-blue-100 mt-1">
-            Ask questions about the global economic outlook
-          </p>
-        </header>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-          <div className="max-w-4xl mx-auto">
-            {messages.map((message, index) => (
-              <MessageBubble
-                key={index}
-                role={message.role}
-                content={message.content}
-                citations={message.citations}
+      {/* Tab Content */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === 'chat' ? (
+          <div className="flex h-full">
+            {/* Side Panel */}
+            <div className="w-80 flex-shrink-0">
+              <StatusPanel
+                onLoadClick={() => setShowLoadModal(true)}
+                onExportClick={handleExport}
+                onHelpClick={() => setShowHelpModal(true)}
+                refreshToken={statusRefreshToken}
+                showLoadButton={false}
+                showFileTable={false}
+                showExportButton
+                showHelpButton
               />
-            ))}
-            {isLoading && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-gray-100 rounded-lg px-4 py-3 border border-gray-200">
-                  <div className="flex space-x-2">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                  </div>
+            </div>
+
+            {/* Main Chat Area */}
+            <div className="flex-1 flex flex-col">
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                <div className="max-w-4xl mx-auto">
+                  {messages.map((message, index) => (
+                    <MessageBubble
+                      key={index}
+                      role={message.role}
+                      content={message.content}
+                      citations={message.citations}
+                    />
+                  ))}
+                  {isLoading && (
+                    <div className="flex justify-start mb-4">
+                      <div className="bg-gray-100 rounded-lg px-4 py-3 border border-gray-200">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
 
-        {/* Input Area */}
-        <div className="border-t border-gray-200 p-4 bg-white">
-          <div className="max-w-4xl mx-auto flex gap-2">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask me anything about the world economic situation..."
-              className="flex-1 border border-gray-300 rounded-lg px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={2}
-              disabled={isLoading}
-            />
-            <button
-              onClick={handleSend}
-              disabled={isLoading || !input.trim()}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-            >
-              Send
-            </button>
+              {/* Input Area */}
+              <div className="border-t border-gray-200 p-4 bg-white">
+                <div className="max-w-4xl mx-auto flex gap-2">
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask me anything about the world economic situation..."
+                    className="flex-1 border border-gray-300 rounded-lg px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                    disabled={isLoading}
+                  />
+                  <button
+                    onClick={handleSend}
+                    disabled={isLoading || !input.trim()}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="h-full overflow-y-auto p-4 bg-gray-50">
+            <div className="max-w-6xl mx-auto">
+              <StatusPanel
+                onLoadClick={() => setShowLoadModal(true)}
+                onExportClick={handleExport}
+                onHelpClick={() => setShowHelpModal(true)}
+                refreshToken={statusRefreshToken}
+                showLoadButton
+                showFileTable
+                showExportButton={false}
+                showHelpButton={false}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
