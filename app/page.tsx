@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import MessageBubble from '@/components/MessageBubble';
 import StatusPanel from '@/components/StatusPanel';
-import LoadModal from '@/components/LoadModal';
 import { Message } from '@/types';
 import { GREETING } from '@/lib/config';
 
@@ -17,10 +16,10 @@ export default function Home() {
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showLoadModal, setShowLoadModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [statusRefreshToken, setStatusRefreshToken] = useState(0);
   const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
+  const [knowledgeLoading, setKnowledgeLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -113,6 +112,74 @@ export default function Home() {
     URL.revokeObjectURL(url);
   };
 
+  const triggerStatusRefresh = () => {
+    setStatusRefreshToken((prev) => prev + 1);
+  };
+
+  const handleLoad = async (policy: 'missing_only' | 'all') => {
+    try {
+      setKnowledgeLoading(true);
+      triggerStatusRefresh();
+
+      const response = await fetch('/api/load', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ policy }),
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const data = isJson ? await response.json() : await response.text();
+
+      if (!response.ok) {
+        const errorMessage = isJson && data && typeof data === 'object' && 'error' in data
+          ? String((data as { error?: string }).error || 'Failed to load data')
+          : typeof data === 'string' && data.trim().length > 0
+            ? data
+            : 'Failed to load data';
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error('Load error:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to load data');
+    } finally {
+      setKnowledgeLoading(false);
+      triggerStatusRefresh();
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete the knowledge DB? This will remove all loaded documents and reset statuses.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch('/api/reset', {
+        method: 'POST',
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const data = isJson ? await response.json() : await response.text();
+
+      if (!response.ok) {
+        const errorMessage = isJson && data && typeof data === 'object' && 'error' in data
+          ? String((data as { error?: string }).error || 'Failed to delete all files')
+          : typeof data === 'string' && data.trim().length > 0
+            ? data
+            : 'Failed to delete all files';
+        throw new Error(errorMessage);
+      }
+
+      triggerStatusRefresh();
+    } catch (error) {
+      console.error('Delete error:', error);
+      window.alert(error instanceof Error ? error.message : 'Failed to delete all files');
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
@@ -156,7 +223,7 @@ export default function Home() {
             {/* Side Panel */}
             <div className="w-80 flex-shrink-0">
               <StatusPanel
-                onLoadClick={() => setShowLoadModal(true)}
+                onLoadClick={() => setActiveTab('knowledge')}
                 onExportClick={handleExport}
                 onHelpClick={() => setShowHelpModal(true)}
                 refreshToken={statusRefreshToken}
@@ -222,30 +289,25 @@ export default function Home() {
           <div className="h-full overflow-y-auto p-4 bg-gray-50">
             <div className="max-w-6xl mx-auto">
               <StatusPanel
-                onLoadClick={() => setShowLoadModal(true)}
+                onLoadClick={() => setActiveTab('knowledge')}
                 onExportClick={handleExport}
                 onHelpClick={() => setShowHelpModal(true)}
+                onLoadNew={() => handleLoad('missing_only')}
+                onReloadAll={() => handleLoad('all')}
+                onDeleteAll={handleDeleteAll}
                 refreshToken={statusRefreshToken}
-                showLoadButton
+                showLoadButton={false}
                 showFileTable
                 showExportButton={false}
                 showHelpButton={false}
+                showKnowledgeActions
+                forcePolling={knowledgeLoading}
+                disableKnowledgeActions={knowledgeLoading}
               />
             </div>
           </div>
         )}
       </div>
-
-      {/* Modals */}
-      <LoadModal
-        isOpen={showLoadModal}
-        onClose={(didChange) => {
-          setShowLoadModal(false);
-          if (didChange) {
-            setStatusRefreshToken((prev) => prev + 1);
-          }
-        }}
-      />
       
       {/* Help Modal */}
       {showHelpModal && (
