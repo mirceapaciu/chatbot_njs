@@ -19,6 +19,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [statusRefreshToken, setStatusRefreshToken] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -106,6 +107,7 @@ export default function Home() {
           onLoadClick={() => setShowLoadModal(true)}
           onExportClick={handleExport}
           onHelpClick={() => setShowHelpModal(true)}
+          refreshToken={statusRefreshToken}
         />
       </div>
 
@@ -169,7 +171,13 @@ export default function Home() {
       </div>
 
       {/* Modals */}
-      <LoadModal isOpen={showLoadModal} onClose={() => setShowLoadModal(false)} />
+      <LoadModal
+        isOpen={showLoadModal}
+        onClose={() => {
+          setShowLoadModal(false);
+          setStatusRefreshToken((prev) => prev + 1);
+        }}
+      />
       
       {/* Help Modal */}
       {showHelpModal && (

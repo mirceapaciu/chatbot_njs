@@ -7,9 +7,10 @@ interface StatusPanelProps {
   onLoadClick: () => void;
   onExportClick: () => void;
   onHelpClick: () => void;
+  refreshToken?: number;
 }
 
-export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick }: StatusPanelProps) {
+export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, refreshToken }: StatusPanelProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,7 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick }:
 
   useEffect(() => {
     fetchStatus();
-  }, []);
+  }, [refreshToken]);
 
   return (
     <div className="w-full h-full bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
