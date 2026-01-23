@@ -5,7 +5,7 @@ import { FileStatus, LoadStats } from '@/types';
 
 interface LoadModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (didChange: boolean) => void;
 }
 
 export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
@@ -19,19 +19,21 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
     type: 'success' | 'error' | 'warning';
     message: string;
   } | null>(null);
+  const [didChange, setDidChange] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
+    setDidChange(false);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !loading) {
-        onClose();
+        onClose(didChange);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, loading, onClose]);
+  }, [didChange, isOpen, loading, onClose]);
 
   useEffect(() => {
     if (!loading) {
@@ -124,6 +126,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
           type: 'success',
           message: `Successfully loaded ${stats.loaded.length} file(s)`,
         });
+        setDidChange(true);
       } else {
         setFeedback({
           type: 'warning',
@@ -173,6 +176,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
         type: 'success',
         message: 'All loaded files were deleted and statuses were reset.',
       });
+      setDidChange(true);
     } catch (error) {
       setFeedback({
         type: 'error',
@@ -238,7 +242,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
         </div>
 
         <button
-          onClick={onClose}
+          onClick={() => onClose(didChange)}
           disabled={loading}
           className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >

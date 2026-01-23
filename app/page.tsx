@@ -186,9 +186,11 @@ export default function Home() {
       {/* Modals */}
       <LoadModal
         isOpen={showLoadModal}
-        onClose={() => {
+        onClose={(didChange) => {
           setShowLoadModal(false);
-          setStatusRefreshToken((prev) => prev + 1);
+          if (didChange) {
+            setStatusRefreshToken((prev) => prev + 1);
+          }
         }}
       />
       
