@@ -78,7 +78,7 @@ Edit `.env.local` with your credentials:
 # OpenAI Configuration
 OPENAI_API_KEY=sk-your-openai-api-key
 
-# HuggingFace Configuration (optional but recommended for embeddings)
+# HuggingFace Configuration
 HUGGINGFACE_API_KEY=hf_your-huggingface-api-key
 
 # Supabase Configuration
@@ -107,7 +107,7 @@ data/
         └── oecd-prices-202309-202509.csv
 ```
 
-Copy the data files from the original project or download them from the URLs specified in `config/data_sources.yaml`.
+The metadata for these files must be entered into config/data_sources.yaml.
 
 ### 5. Run the Development Server
 

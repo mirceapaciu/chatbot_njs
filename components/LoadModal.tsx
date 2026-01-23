@@ -26,6 +26,8 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
     if (!isOpen) return;
     setDidChange(false);
     didChangeRef.current = false;
+    setFeedback(null);
+    setProgress(null);
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !loading) {
