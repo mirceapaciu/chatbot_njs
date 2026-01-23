@@ -182,11 +182,21 @@ export class DataLoaderService {
       : await fs.readFile(filePath, 'utf-8');
     
     // Chunk the content (simplified version - you may want to use a proper chunking library)
-    const chunks = this.chunkText(content, 1000);
+    const chunks = this.chunkText(content, 1000, 200);
+
+    await this.sqlStore.updateStatus(
+      source.id,
+      file.name,
+      'vector',
+      'loading',
+      `Loading 0/${chunks.length}`
+    );
 
     // Create documents with metadata
     const documents: Document[] = [];
     
+    const progressStep = Math.max(1, Math.floor(chunks.length / 20));
+
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const embedding = await embeddingService.embedText(chunk);
@@ -205,8 +215,16 @@ export class DataLoaderService {
         },
       });
 
-      if ((i + 1) % 100 === 0) {
-        console.log(`Processed ${i+1}/${chunks.length} chunks for ${file.name}`);
+      if ((i + 1) % progressStep === 0 || i === chunks.length - 1) {
+        const progressMessage = `Loading ${i + 1}/${chunks.length}`;
+        console.log(`Processed ${i + 1}/${chunks.length} chunks for ${file.name}`);
+        await this.sqlStore.updateStatus(
+          source.id,
+          file.name,
+          'vector',
+          'loading',
+          progressMessage
+        );
       }
     }
 
@@ -231,10 +249,19 @@ export class DataLoaderService {
     file: DataFileConfig,
     filePath: string
   ): Promise<void> {
+    await this.sqlStore.updateStatus(
+      source.id,
+      file.name,
+      'sql',
+      'loading',
+      'Loading 0/1'
+    );
+
     const csvContent = await fs.readFile(filePath, 'utf-8');
 
     // Parse CSV
-    const parseResult = await new Promise<Papa.ParseResult<any>>((resolve) => {
+    type CsvRow = Record<string, string | number | null | undefined>;
+    const parseResult = await new Promise<Papa.ParseResult<CsvRow>>((resolve) => {
       Papa.parse(csvContent, {
         header: true,
         dynamicTyping: true,
@@ -249,13 +276,16 @@ export class DataLoaderService {
 
     // Process CPI data (customize based on your CSV structure)
     const cpiData = parseResult.data
-      .map((row: any) => ({
-        ref_area_code: row['REF_AREA'] || row['LOCATION'],
-        ref_area_name: row['Reference area'] || row['Country'] || row['REF_AREA'],
-        time_period: this.parseDate(row['TIME_PERIOD'] || row['Time']),
-        inflation_pct: parseFloat(row['OBS_VALUE'] || row['Value']) || 0,
-      }))
-      .filter(row => row.ref_area_code && row.ref_area_name && row.time_period);
+      .map((row: CsvRow) => {
+        const refAreaCodeRaw = row['REF_AREA'] ?? row['LOCATION'] ?? '';
+        const refAreaNameRaw = row['Reference area'] ?? row['Country'] ?? row['REF_AREA'] ?? '';
+        const ref_area_code = String(refAreaCodeRaw).trim();
+        const ref_area_name = String(refAreaNameRaw).trim();
+        const time_period = this.parseDate(String(row['TIME_PERIOD'] ?? row['Time'] ?? ''));
+        const inflation_pct = parseFloat(String(row['OBS_VALUE'] ?? row['Value'] ?? 0)) || 0;
+        return { ref_area_code, ref_area_name, time_period, inflation_pct };
+      })
+      .filter(row => row.ref_area_code.length > 0 && row.ref_area_name.length > 0 && row.time_period.length > 0);
 
     // Deduplicate by ref_area_code and time_period (keep last occurrence)
     const uniqueData = new Map<string, typeof cpiData[0]>();
@@ -267,6 +297,14 @@ export class DataLoaderService {
 
     // Insert into database
     await this.sqlStore.insertCPIData(deduplicatedData);
+
+    await this.sqlStore.updateStatus(
+      source.id,
+      file.name,
+      'sql',
+      'loading',
+      'Loading 1/1'
+    );
 
     // Update status
     await this.sqlStore.updateStatus(

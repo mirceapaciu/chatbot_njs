@@ -15,7 +15,7 @@ export class SQLStoreService {
     dataSourceId: string,
     fileName: string,
     target: 'vector' | 'sql',
-    status: 'loaded' | 'not_loaded' | 'failed',
+    status: 'loaded' | 'not_loaded' | 'failed' | 'loading',
     message?: string
   ): Promise<void> {
     const { error } = await this.supabase

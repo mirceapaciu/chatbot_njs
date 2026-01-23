@@ -202,10 +202,16 @@ Excerpt: ${doc.content.trim()}`;
 
       const metadata = citationDetails.details[fullMatch];
       if (metadata) {
+        const { chunk_text, ...metadataFields } = metadata as DocumentMetadata & {
+          chunk_text?: string;
+        };
+        const metadataAsStrings = Object.fromEntries(
+          Object.entries(metadataFields).map(([key, value]) => [key, String(value)])
+        );
         citations.push({
           label: fullMatch,
-          metadata: metadata as any,
-          chunk_text: metadata.chunk_text || '',
+          metadata: metadataAsStrings,
+          chunk_text: chunk_text || '',
         });
       }
     }

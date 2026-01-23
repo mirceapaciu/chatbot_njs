@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LoadStats } from '@/types';
+import { FileStatus, LoadStats } from '@/types';
 
 interface LoadModalProps {
   isOpen: boolean;
@@ -10,6 +10,11 @@ interface LoadModalProps {
 
 export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<{
+    fileName: string;
+    message?: string;
+    percent?: number;
+  } | null>(null);
   const [feedback, setFeedback] = useState<{
     type: 'success' | 'error' | 'warning';
     message: string;
@@ -28,11 +33,61 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, loading, onClose]);
 
+  useEffect(() => {
+    if (!loading) {
+      setProgress(null);
+      return;
+    }
+
+    let isActive = true;
+
+    const parseProgress = (message?: string) => {
+      if (!message) return undefined;
+      const match = message.match(/Loading\s+(\d+)\s*\/\s*(\d+)/i);
+      if (!match) return undefined;
+      const current = Number(match[1]);
+      const total = Number(match[2]);
+      if (!Number.isFinite(current) || !Number.isFinite(total) || total <= 0) return undefined;
+      return Math.min(100, Math.max(0, Math.round((current / total) * 100)));
+    };
+
+    const fetchProgress = async () => {
+      try {
+        const response = await fetch('/api/status', { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        const statuses = (data.statuses || []) as FileStatus[];
+        const loadingStatus = statuses.find((status) => status.status === 'loading');
+        if (!loadingStatus) return;
+
+        const percent = parseProgress(loadingStatus.message);
+
+        if (isActive) {
+          setProgress({
+            fileName: loadingStatus.file_name,
+            message: loadingStatus.message,
+            percent,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch load progress:', error);
+      }
+    };
+
+    fetchProgress();
+    const interval = window.setInterval(fetchProgress, 1000);
+    return () => {
+      isActive = false;
+      window.clearInterval(interval);
+    };
+  }, [loading]);
+
   if (!isOpen) return null;
 
   const handleLoad = async (policy: 'missing_only' | 'all') => {
     try {
       setLoading(true);
+      setProgress(null);
       setFeedback(null);
 
       const response = await fetch('/api/load', {
@@ -94,6 +149,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
 
     try {
       setLoading(true);
+      setProgress(null);
       setFeedback(null);
 
       const response = await fetch('/api/reset', {
@@ -143,6 +199,23 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
             'bg-yellow-50 text-yellow-800 border border-yellow-200'
           }`}>
             <pre className="whitespace-pre-wrap">{feedback.message}</pre>
+          </div>
+        )}
+
+        {loading && progress && (
+          <div className="mb-4">
+            <p className="text-sm font-semibold text-gray-700 mb-2">
+              Loading {progress.fileName}
+            </p>
+            {progress.message && (
+              <p className="text-xs text-gray-500 mb-2">{progress.message}</p>
+            )}
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-2 bg-blue-600 transition-all"
+                style={{ width: `${progress.percent ?? 0}%` }}
+              />
+            </div>
           </div>
         )}
 

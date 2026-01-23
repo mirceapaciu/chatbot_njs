@@ -71,6 +71,7 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, r
                 <p className={`mt-1 ${
                   status.status === 'loaded' ? 'text-green-600' :
                   status.status === 'failed' ? 'text-red-600' :
+                  status.status === 'loading' ? 'text-blue-600' :
                   'text-gray-600'
                 }`}>
                   Status: {status.status}
