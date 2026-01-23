@@ -85,6 +85,48 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
     }
   };
 
+  const handleDeleteAll = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete the knowledge DB? This will remove all loaded documents and reset statuses.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      setFeedback(null);
+
+      const response = await fetch('/api/reset', {
+        method: 'POST',
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const isJson = contentType.includes('application/json');
+      const data = isJson ? await response.json() : await response.text();
+
+      if (!response.ok) {
+        const errorMessage = isJson && data && typeof data === 'object' && 'error' in data
+          ? String((data as { error?: string }).error || 'Failed to delete all files')
+          : typeof data === 'string' && data.trim().length > 0
+            ? data
+            : 'Failed to delete all files';
+        throw new Error(errorMessage);
+      }
+
+      setFeedback({
+        type: 'success',
+        message: 'All loaded files were deleted and statuses were reset.',
+      });
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to delete all files',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -129,6 +171,24 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
         >
           Close
         </button>
+
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-red-700 select-none">
+            Danger Zone
+          </summary>
+          <div className="mt-3 rounded border border-red-200 bg-red-50 p-3">
+            <p className="text-xs text-red-800 mb-3">
+              Deleting the knowledge DB removes all loaded documents and resets statuses.
+            </p>
+            <button
+              onClick={handleDeleteAll}
+              disabled={loading}
+              className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Delete Knowledge DB
+            </button>
+          </div>
+        </details>
       </div>
     </div>
   );
