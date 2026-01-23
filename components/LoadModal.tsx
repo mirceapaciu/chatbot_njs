@@ -257,7 +257,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
 
         <details className="mt-4">
           <summary className="cursor-pointer text-sm font-semibold text-red-700 select-none">
-            Danger Zone
+            Click here to open the Danger Zone
           </summary>
           <div className="mt-3 rounded border border-red-200 bg-red-50 p-3">
             <p className="text-xs text-red-800 mb-3">
