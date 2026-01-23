@@ -20,12 +20,12 @@ export default function StatusPanel({ onLoadClick, onExportClick, onHelpClick, r
       setLoading(true);
       
       // Fetch vector store status
-      const vectorResponse = await fetch('/api/vector-status');
+      const vectorResponse = await fetch('/api/vector-status', { cache: 'no-store' });
       const vectorData = await vectorResponse.json();
       setIsLoaded(vectorData.isLoaded);
 
       // Fetch file statuses
-      const statusResponse = await fetch('/api/status');
+      const statusResponse = await fetch('/api/status', { cache: 'no-store' });
       const statusData = await statusResponse.json();
       setStatuses(statusData.statuses || []);
     } catch (error) {

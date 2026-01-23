@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { VectorStoreService } from '@/lib/services/vectorStoreService';
 import { SQLStoreService } from '@/lib/services/sqlStoreService';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const vectorStore = new VectorStoreService();
@@ -19,6 +21,10 @@ export async function GET(request: NextRequest) {
       documentCount: count,
       sqlLoaded,
       isLoaded: !isEmpty || sqlLoaded,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      },
     });
   } catch (error) {
     console.error('Vector store status API error:', error);
