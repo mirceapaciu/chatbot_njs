@@ -8,9 +8,11 @@
 - 🔄 **Interactive Loader** - Load and manage source documents
 - 📝 **Citation Popovers** - Click citations to view source excerpts and URLs
 - 🛠️ **Function Calling** - Fetch real-time GDP growth, exchange rates, and inflation data
+- ⏱️ **Rate Limiting** - Configurable server-wide message limits per minute
 - ✅ **Input Validation** - Prevents prompt injection and filters profanity
 - 📥 **Export History** - Download chat conversations as JSON
 - 🎨 **Modern UI** - Built with React, TypeScript, and Tailwind CSS
+
 
 ## Tech Stack
 
@@ -44,10 +46,6 @@
 ```bash
 cd nextjs-migration
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
 ### 2. Set Up Supabase
@@ -111,10 +109,6 @@ The metadata for these files must be entered into config/data_sources.yaml.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
@@ -150,7 +144,7 @@ Click on any citation (e.g., `[imf-weo-apr-2025.pdf, p.32]`) to view:
 The chatbot can fetch real-time data:
 
 - **GDP Growth**: "What is the real GDP growth for France in 2024?"
-- **Exchange Rates**: "What is the exchange rate between USD and EUR?"
+- **Exchange Rates**: "What is the exchange rate from EUR to USD?"
 - **CPI Data**: "What is the inflation rate for Germany in 2025?"
 
 ### Exporting Chat History
