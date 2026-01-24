@@ -208,7 +208,7 @@ export class DataLoaderService {
     
     const progressStep = Math.max(1, Math.floor(chunks.length / 20));
 
-    for (let i = 0; i < Math.min(10, chunks.length); i++) { // FIXME: 10 is just for testing
+    for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       const embedding = await embeddingService.embedText(chunk);
       
