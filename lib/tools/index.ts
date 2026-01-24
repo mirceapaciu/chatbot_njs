@@ -1,3 +1,5 @@
+import type { SQLStoreService } from '../services/sqlStoreService';
+
 /**
  * Tools for fetching external economic data
  * These are function definitions for OpenAI function calling
@@ -10,7 +12,7 @@ export interface Tool {
     description: string;
     parameters: {
       type: 'object';
-      properties: Record<string, any>;
+      properties: Record<string, unknown>;
       required: string[];
     };
   };
@@ -55,30 +57,69 @@ export async function getRealGDPGrowth(
 }
 
 /**
- * Fetch exchange rate data (placeholder - customize based on your data source)
+ * Fetch exchange rate data using ECB daily rates
  */
 export async function getExchangeRate(
   fromCurrency: string,
   toCurrency: string,
   date?: string
 ): Promise<string> {
+  // FIXME: use the date parameter to fetch historical rates if needed
   try {
-    const apiUrl = `https://api.exchangerate-api.com/v4/latest/${fromCurrency.toUpperCase()}`;
-    
-    const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
-    
+    const url = 'https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml';
+    const dateLabel = date ? ` on ${date}` : '';
+
+    const response = await fetch(url, {
+      next: { revalidate: 3600 },
+      headers: {
+        Accept: 'application/xml,text/xml,*/*',
+        'User-Agent': 'chatbot/1.0 (+https://example.com)',
+      },
+    });
+
     if (!response.ok) {
       throw new Error(`Exchange rate API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
-    const rate = data.rates?.[toCurrency.toUpperCase()];
+    const xml = await response.text();
+    const rates: Record<string, number> = {};
+    const rateRegex = /currency=['"]([A-Z]{3})['"]\s+rate=['"]([0-9.]+)['"]/g;
+    let match: RegExpExecArray | null;
 
-    if (rate) {
-      return `Exchange rate from ${fromCurrency.toUpperCase()} to ${toCurrency.toUpperCase()}: ${rate}`;
+    while ((match = rateRegex.exec(xml)) !== null) {
+      const currency = match[1];
+      const rate = Number.parseFloat(match[2]);
+      if (Number.isFinite(rate)) {
+        rates[currency] = rate;
+      }
     }
 
-    return `Could not fetch exchange rate for ${fromCurrency}/${toCurrency}`;
+    rates.EUR = 1.0;
+
+    const baseUpper = fromCurrency.toUpperCase();
+    const targetUpper = toCurrency.toUpperCase();
+
+    if (!rates[baseUpper]) {
+      return `Could not fetch exchange rate for ${fromCurrency}/${toCurrency}${dateLabel}`;
+    }
+    if (!rates[targetUpper]) {
+      return `Could not fetch exchange rate for ${fromCurrency}/${toCurrency}${dateLabel}`;
+    }
+
+    let rate: number;
+    if (baseUpper === 'EUR') {
+      rate = rates[targetUpper];
+    } else if (targetUpper === 'EUR') {
+      rate = 1 / rates[baseUpper];
+    } else {
+      rate = (1 / rates[baseUpper]) * rates[targetUpper];
+    }
+
+    if (!Number.isFinite(rate)) {
+      return `Could not fetch exchange rate for ${fromCurrency}/${toCurrency}${dateLabel}`;
+    }
+
+    return `Exchange rate from ${baseUpper} to ${targetUpper}${dateLabel}: ${rate}`;
   } catch (error) {
     console.error('Error fetching exchange rate:', error);
     return `Error fetching exchange rate: ${error instanceof Error ? error.message : 'Unknown error'}`;
@@ -92,7 +133,7 @@ export async function getCPI(
   countryCode: string,
   year?: string,
   month?: string,
-  sqlStore?: any
+  sqlStore?: Pick<SQLStoreService, 'getCPIData'>
 ): Promise<string> {
   try {
     if (!sqlStore) {
