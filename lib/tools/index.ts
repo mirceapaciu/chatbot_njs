@@ -25,7 +25,13 @@ export async function getRealGDPGrowth(
 ): Promise<string> {
   try {
     const url = `https://www.imf.org/external/datamapper/api/v1/NGDP_RPCH/${countryCode}?periods=${period}`;
-    const response = await fetch(url, { next: { revalidate: 3600 } });
+    const response = await fetch(url, {
+      next: { revalidate: 3600 },
+      headers: {
+        'User-Agent': 'chatbot/1.0 (+https://example.com)',
+        Accept: 'application/json,text/plain,*/*',
+      },
+    });
     
     if (!response.ok) {
       throw new Error(`IMF API error: ${response.statusText}`);
@@ -57,8 +63,6 @@ export async function getExchangeRate(
   date?: string
 ): Promise<string> {
   try {
-    // Using a free API like exchangerate-api.com or similar
-    // You may need to sign up for an API key
     const apiUrl = `https://api.exchangerate-api.com/v4/latest/${fromCurrency.toUpperCase()}`;
     
     const response = await fetch(apiUrl, { next: { revalidate: 3600 } });
