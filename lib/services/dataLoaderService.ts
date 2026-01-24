@@ -46,7 +46,17 @@ export class DataLoaderService {
               file.name,
               target,
               'not_loaded',
-              'Not yet loaded'
+              'Not yet loaded',
+              file.url
+            );
+          } else if (!existing.url && file.url) {
+            await this.sqlStore.updateStatus(
+              source.id,
+              file.name,
+              target,
+              existing.status,
+              existing.message,
+              file.url
             );
           }
         }

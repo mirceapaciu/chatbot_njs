@@ -18,6 +18,7 @@ export interface FileStatus {
   target: 'vector' | 'sql';
   status: 'loaded' | 'not_loaded' | 'failed' | 'loading';
   message?: string;
+  url?: string;
   updated_at: string;
 }
 

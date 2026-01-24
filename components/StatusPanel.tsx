@@ -45,9 +45,28 @@ const StatusRow = memo(function StatusRow({
       <td className="px-3 py-2 text-gray-500">
         {new Date(status.updated_at).toLocaleString()}
       </td>
+      <td className="px-3 py-2 text-center">
+        {status.url ? (
+          <a
+            href={status.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Open source for ${status.file_name}`}
+            className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800"
+          >
+            🔗
+          </a>
+        ) : (
+          <span className="text-gray-300">—</span>
+        )}
+      </td>
     </tr>
   );
-}, (prev, next) => prev.status === next.status && prev.progress === next.progress);
+}, (prev, next) => (
+  prev.status === next.status &&
+  prev.progress === next.progress &&
+  prev.status.url === next.status.url
+));
 
 export default function StatusPanel({
   onLoadClick,
@@ -226,11 +245,12 @@ export default function StatusPanel({
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="text-left px-3 py-2 font-semibold">Source</th>
+                    <th className="text-left px-3 py-2 font-semibold">Data Source</th>
                     <th className="text-left px-3 py-2 font-semibold">File</th>
                     <th className="text-left px-3 py-2 font-semibold">Target</th>
                     <th className="text-left px-3 py-2 font-semibold">Status</th>
                     <th className="text-left px-3 py-2 font-semibold">Updated</th>
+                    <th className="text-center px-3 py-2 font-semibold">Source</th>
                   </tr>
                 </thead>
                 <tbody>

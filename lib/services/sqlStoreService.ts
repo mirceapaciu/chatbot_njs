@@ -16,18 +16,25 @@ export class SQLStoreService {
     fileName: string,
     target: 'vector' | 'sql',
     status: 'loaded' | 'not_loaded' | 'failed' | 'loading',
-    message?: string
+    message?: string,
+    url?: string
   ): Promise<void> {
+    const payload: Record<string, unknown> = {
+      data_source_id: dataSourceId,
+      file_name: fileName,
+      target,
+      status,
+      message,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (url) {
+      payload.url = url;
+    }
+
     const { error } = await this.supabase
       .from('file_load_status')
-      .upsert({
-        data_source_id: dataSourceId,
-        file_name: fileName,
-        target,
-        status,
-        message,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(payload);
 
     if (error) {
       throw new Error(`Failed to update status: ${error.message}`);

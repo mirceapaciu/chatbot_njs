@@ -5,6 +5,7 @@ CREATE EXTENSION IF NOT EXISTS vector;
 CREATE TABLE IF NOT EXISTS file_load_status (
     data_source_id TEXT NOT NULL,
     file_name TEXT NOT NULL,
+    url TEXT,
     target TEXT NOT NULL, -- 'vector' or 'sql'
     status TEXT NOT NULL, -- 'loaded', 'not_loaded', or 'failed'
     message TEXT,
