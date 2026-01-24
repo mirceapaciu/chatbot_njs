@@ -4,9 +4,30 @@ import { VectorStoreService } from '@/lib/services/vectorStoreService';
 import { SQLStoreService } from '@/lib/services/sqlStoreService';
 import { validateUserInput, sanitizeInput } from '@/lib/validation';
 import { Message } from '@/types';
+import { checkRateLimit } from '@/lib/services/rateLimiter';
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimitEnv = Number(process.env.RATE_LIMIT_PER_MINUTE ?? '10');
+    const rateLimitPerMinute = Number.isFinite(rateLimitEnv) && rateLimitEnv > 0 ? rateLimitEnv : 10;
+    const rateLimitWindowMs = 60_000;
+    const rateLimit = checkRateLimit('global', rateLimitPerMinute, rateLimitWindowMs);
+
+    if (!rateLimit.allowed) {
+      const retryAfterSeconds = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000));
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfterSeconds),
+            'X-RateLimit-Limit': String(rateLimitPerMinute),
+            'X-RateLimit-Remaining': String(rateLimit.remaining),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { message, conversationHistory } = body as {
       message: string;
