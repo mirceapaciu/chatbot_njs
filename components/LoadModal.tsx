@@ -237,7 +237,7 @@ export default function LoadModal({ isOpen, onClose }: LoadModalProps) {
             disabled={loading}
             className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Loading...' : 'Load New Files'}
+            {loading ? 'Loading...' : 'Load Registered Files'}
           </button>
           
           <button

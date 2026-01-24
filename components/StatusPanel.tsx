@@ -204,7 +204,7 @@ export default function StatusPanel({
               disabled={disableKnowledgeActions}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Load New Files
+              Load Registered Files
             </button>
             <button
               onClick={onReloadAll}
@@ -214,13 +214,6 @@ export default function StatusPanel({
               Reload All Files
             </button>
           </div>
-          <button
-            onClick={onDeleteAll}
-            disabled={disableKnowledgeActions}
-            className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Delete Knowledge DB
-          </button>
         </div>
       )}
 
@@ -229,7 +222,7 @@ export default function StatusPanel({
           <p className="text-sm text-gray-500">Loading status...</p>
         ) : statuses.length > 0 ? (
           <div className="mb-4">
-            <p className="font-semibold mb-2 text-sm">Loaded Files:</p>
+            <p className="font-semibold mb-2 text-sm">Registered Files:</p>
             <div className="max-h-96 overflow-y-auto border border-gray-200 rounded bg-white">
               <table className="w-full text-xs">
                 <thead className="sticky top-0 bg-gray-100 text-gray-700">
@@ -285,6 +278,26 @@ export default function StatusPanel({
           >
             ❓ Help & Examples
           </button>
+        )}
+
+        {showKnowledgeActions && (
+          <details className="mt-4 rounded border border-red-200 bg-red-50">
+            <summary className="cursor-pointer select-none px-3 py-2 text-sm font-semibold text-red-700">
+              Danger Zone
+            </summary>
+            <div className="border-t border-red-200 px-3 py-3">
+              <p className="mb-2 text-xs text-red-700">
+                This action permanently deletes all files from the knowledge database.
+              </p>
+              <button
+                onClick={onDeleteAll}
+                disabled={disableKnowledgeActions}
+                className="w-full bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Delete Knowledge DB
+              </button>
+            </div>
+          </details>
         )}
       </div>
     </div>

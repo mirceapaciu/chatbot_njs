@@ -124,7 +124,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ### 6. Load Documents
 
 1. Click the **"Load DB"** button in the sidebar
-2. Choose **"Load New Files"** to load files marked as not loaded
+2. Choose **"Load Registered Files"** to load registered files marked as not loaded
 3. Or choose **"Reload All Files"** to clear and reload everything
 4. Wait for the loading process to complete
 
