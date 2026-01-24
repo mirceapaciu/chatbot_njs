@@ -165,6 +165,24 @@ export class SQLStoreService {
   }
 
   /**
+   * Status cleanup: reset any loading statuses back to not_loaded
+   */
+  async statusCleanup(): Promise<void> {
+    const { error } = await this.supabase
+      .from('t_file')
+      .update({
+        status: 'not_loaded',
+        message: 'Reset from loading',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('status', 'loading');
+
+    if (error) {
+      throw new Error(`Failed to reset loading statuses: ${error.message}`);
+    }
+  }
+
+  /**
    * Clear all CPI data
    */
   async clearCPIData(): Promise<void> {

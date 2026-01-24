@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { VectorStoreService } from '@/lib/services/vectorStoreService';
 import { SQLStoreService } from '@/lib/services/sqlStoreService';
+import { loadCoordinator } from '@/lib/services/loadCoordinator';
+import { statusCleanupOnBoot } from '@/lib/services/statusCleanup';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+void statusCleanupOnBoot();
 
 async function loadDataSourcesConfig() {
   const [fs, path, yaml] = await Promise.all([
@@ -36,6 +40,11 @@ export async function GET(request: NextRequest) {
 
     if (isEmpty && !hasLoading && !hasLoaded) {
       void (async () => {
+        const release = loadCoordinator.tryAcquire();
+        if (!release) {
+          return;
+        }
+
         try {
           const [{ DataLoaderService }, { VectorStoreService }, { SQLStoreService }] =
             await Promise.all([
@@ -52,6 +61,8 @@ export async function GET(request: NextRequest) {
           await dataLoader.load('all');
         } catch (error) {
           console.error('Auto-load failed:', error);
+        } finally {
+          release();
         }
       })();
     }

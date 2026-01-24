@@ -43,6 +43,7 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showHelpModal]);
 
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 

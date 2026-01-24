@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { DataSourcesConfig } from '@/types';
 import type { LoadPolicy } from '@/lib/services/dataLoaderService';
+import { loadCoordinator } from '@/lib/services/loadCoordinator';
+import { statusCleanupOnBoot } from '@/lib/services/statusCleanup';
 
 export const runtime = 'nodejs';
 
+void statusCleanupOnBoot();
+
 export async function POST(request: NextRequest) {
+  const release = loadCoordinator.tryAcquire();
+  if (!release) {
+    return NextResponse.json(
+      { error: 'A knowledge DB load is already in progress' },
+      { status: 409 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { policy } = body as { policy: LoadPolicy };
@@ -56,6 +68,8 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to load data', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
+  } finally {
+    release();
   }
 }
 

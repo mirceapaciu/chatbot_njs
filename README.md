@@ -23,8 +23,6 @@
 ### Backend
 - **Supabase** - Backend-as-a-Service
   - PostgreSQL with pgvector extension
-  - Real-time subscriptions
-  - Row-level security
 - **OpenAI API** - GPT-4o-mini for chat completions and function calling
 - **HuggingFace API** - Sentence transformers for embeddings
 
