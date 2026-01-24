@@ -33,7 +33,7 @@ export class SQLStoreService {
     }
 
     const { error } = await this.supabase
-      .from('file_load_status')
+      .from('t_file')
       .upsert(payload);
 
     if (error) {
@@ -50,7 +50,7 @@ export class SQLStoreService {
     target: 'vector' | 'sql'
   ): Promise<FileStatus | null> {
     const { data, error } = await this.supabase
-      .from('file_load_status')
+      .from('t_file')
       .select('*')
       .eq('data_source_id', dataSourceId)
       .eq('file_name', fileName)
@@ -70,7 +70,7 @@ export class SQLStoreService {
    */
   async listStatuses(): Promise<FileStatus[]> {
     const { data, error } = await this.supabase
-      .from('file_load_status')
+      .from('t_file')
       .select('*')
       .order('data_source_id')
       .order('file_name')
@@ -88,7 +88,7 @@ export class SQLStoreService {
    */
   async resetStatuses(targets: ('vector' | 'sql')[]): Promise<void> {
     const { error } = await this.supabase
-      .from('file_load_status')
+      .from('t_file')
       .update({
         status: 'not_loaded',
         message: 'Reset for reload',
@@ -111,7 +111,7 @@ export class SQLStoreService {
     inflation_pct: number;
   }>): Promise<void> {
     const { error } = await this.supabase
-      .from('cpi_monthly')
+      .from('t_cpi_monthly')
       .upsert(data, {
         onConflict: 'ref_area_code,time_period',
       });
@@ -130,7 +130,7 @@ export class SQLStoreService {
     month?: string
   ): Promise<CPIData[]> {
     let query = this.supabase
-      .from('cpi_monthly')
+      .from('t_cpi_monthly')
       .select('ref_area_code, ref_area_name, inflation_pct')
       .eq('ref_area_code', countryCode.toUpperCase());
 
@@ -169,7 +169,7 @@ export class SQLStoreService {
    */
   async clearCPIData(): Promise<void> {
     const { error } = await this.supabase
-      .from('cpi_monthly')
+      .from('t_cpi_monthly')
       .delete()
       .neq('id', 0);
 

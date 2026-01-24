@@ -23,7 +23,7 @@ export class VectorStoreService {
     }
 
     const { error } = await this.supabase
-      .from('documents')
+      .from('t_document_vector')
       .insert(
         documents.map(doc => ({
           content: doc.content,
@@ -44,7 +44,7 @@ export class VectorStoreService {
     queryEmbedding: number[],
     k: number = 5
   ): Promise<Document[]> {
-    const { data, error } = await this.supabase.rpc('match_documents', {
+    const { data, error } = await this.supabase.rpc('f_match_documents', {
       query_embedding: queryEmbedding,
       match_count: k,
     });
@@ -65,7 +65,7 @@ export class VectorStoreService {
    */
   async isEmpty(): Promise<boolean> {
     const { count, error } = await this.supabase
-      .from('documents')
+      .from('t_document_vector')
       .select('*', { count: 'exact', head: true });
 
     if (error) {
@@ -80,7 +80,7 @@ export class VectorStoreService {
    */
   async reset(): Promise<void> {
     const { error } = await this.supabase
-      .from('documents')
+      .from('t_document_vector')
       .delete()
       .neq('id', 0); // Delete all rows
 
@@ -94,7 +94,7 @@ export class VectorStoreService {
    */
   async getDocumentCount(): Promise<number> {
     const { count, error } = await this.supabase
-      .from('documents')
+      .from('t_document_vector')
       .select('*', { count: 'exact', head: true });
 
     if (error) {

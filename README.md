@@ -60,7 +60,7 @@ pnpm install
 
 This will:
 - Enable the pgvector extension
-- Create tables for documents, file_load_status, and cpi_monthly
+- Create tables for t_document_vector, t_file, and t_cpi_monthly
 - Create indexes for efficient querying
 - Set up the similarity search function
 
