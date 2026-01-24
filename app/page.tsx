@@ -150,7 +150,7 @@ export default function Home() {
 
   const handleDeleteAll = async () => {
     const confirmed = window.confirm(
-      'Are you sure you want to delete the knowledge DB? This will remove all loaded documents and reset statuses.'
+      'Are you sure you want to delete the knowledge DB? This will remove all loaded documents from the knowledge DBand reset statuses.'
     );
 
     if (!confirmed) return;
@@ -345,10 +345,10 @@ export default function Home() {
               <div>
                 <h3 className="font-semibold text-lg mb-2">Example Questions</h3>
                 <ul className="list-disc list-inside text-gray-700 space-y-1">
-                  <li>"What is the GDP growth forecast for the USA in 2025?"</li>
-                  <li>"What are the main economic risks mentioned in recent reports?"</li>
-                  <li>"How does inflation in Germany compare to other European countries?"</li>
-                  <li>"What is the current exchange rate between USD and EUR?"</li>
+                  <li>&quot;What is the GDP growth forecast for the USA in 2025?&quot;</li>
+                  <li>&quot;What are the main economic risks mentioned in recent reports?&quot;</li>
+                  <li>&quot;How does inflation in Germany compare to other European countries?&quot;</li>
+                  <li>&quot;What is the current exchange rate between USD and EUR?&quot;</li>
                 </ul>
               </div>
 
@@ -356,7 +356,7 @@ export default function Home() {
                 <h3 className="font-semibold text-lg mb-2">Getting Started</h3>
                 <ol className="list-decimal list-inside text-gray-700 space-y-1">
                   <li>Make sure the knowledge database is loaded (green indicator in sidebar)</li>
-                  <li>If not loaded, click "Load DB" to import documents</li>
+                  <li>If not loaded, click &quot;Load DB&quot; to import documents</li>
                   <li>Start asking questions in the chat input</li>
                   <li>Click on citations to view source details</li>
                 </ol>
