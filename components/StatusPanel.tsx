@@ -38,10 +38,9 @@ const StatusRow = memo(function StatusRow({
         status.status === 'loading' ? 'text-blue-600' :
         'text-gray-600'
       }`}>
-        {status.status}
-      </td>
-      <td className="px-3 py-2 text-gray-500">
-        {typeof progress === 'number' ? `${progress}%` : '-'}
+        {status.status === 'loading' && typeof progress === 'number'
+          ? `loading ${progress}%`
+          : status.status}
       </td>
       <td className="px-3 py-2 text-gray-500">
         {new Date(status.updated_at).toLocaleString()}
@@ -204,7 +203,7 @@ export default function StatusPanel({
               disabled={disableKnowledgeActions}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Load Registered Files
+              Load All Files
             </button>
             <button
               onClick={onReloadAll}
@@ -231,7 +230,6 @@ export default function StatusPanel({
                     <th className="text-left px-3 py-2 font-semibold">File</th>
                     <th className="text-left px-3 py-2 font-semibold">Target</th>
                     <th className="text-left px-3 py-2 font-semibold">Status</th>
-                    <th className="text-left px-3 py-2 font-semibold">Progress</th>
                     <th className="text-left px-3 py-2 font-semibold">Updated</th>
                   </tr>
                 </thead>

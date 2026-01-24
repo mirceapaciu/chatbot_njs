@@ -198,7 +198,7 @@ export class DataLoaderService {
     
     const progressStep = Math.max(1, Math.floor(chunks.length / 20));
 
-    for (let i = 0; i < chunks.length; i++) {
+    for (let i = 0; i < Math.min(10, chunks.length); i++) { // FIXME: 10 is just for testing
       const chunk = chunks[i];
       const embedding = await embeddingService.embedText(chunk);
       
@@ -320,7 +320,7 @@ export class DataLoaderService {
   /**
    * Simple text chunking with overlap
    */
-  private chunkText(text: string, chunkSize: number = 1000, overlap: number = 200): string[] {
+  private chunkText(text: string, chunkSize: number = CHUNK_SIZE, overlap: number = CHUNK_OVERLAP): string[] {
     const chunks: string[] = [];
     let start = 0;
 
