@@ -5,16 +5,12 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface StatusPanelProps {
   onLoadClick: () => void;
-  onExportClick: () => void;
-  onHelpClick: () => void;
   onLoadNew?: () => void;
   onReloadAll?: () => void;
   onDeleteAll?: () => void;
   refreshToken?: number;
   showLoadButton?: boolean;
   showFileTable?: boolean;
-  showExportButton?: boolean;
-  showHelpButton?: boolean;
   showKnowledgeActions?: boolean;
   forcePolling?: boolean;
   disableKnowledgeActions?: boolean;
@@ -70,16 +66,12 @@ const StatusRow = memo(function StatusRow({
 
 export default function StatusPanel({
   onLoadClick,
-  onExportClick,
-  onHelpClick,
   onLoadNew,
   onReloadAll,
   onDeleteAll,
   refreshToken,
   showLoadButton = true,
   showFileTable = true,
-  showExportButton = true,
-  showHelpButton = true,
   showKnowledgeActions = false,
   forcePolling = false,
   disableKnowledgeActions = false,
@@ -277,24 +269,6 @@ export default function StatusPanel({
             className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors font-semibold"
           >
             Load DB
-          </button>
-        )}
-
-        {showExportButton && (
-          <button
-            onClick={onExportClick}
-            className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
-          >
-            📥 Export Chat History
-          </button>
-        )}
-
-        {showHelpButton && (
-          <button
-            onClick={onHelpClick}
-            className="w-full bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors text-sm"
-          >
-            ❓ Help & Examples
           </button>
         )}
 
