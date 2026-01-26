@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Perform the load
     let stats;
     try {
-      stats = await withTimeout(dataLoader.load(policy), 5 * 60 * 1000);
+      stats = await withTimeout(dataLoader.load(policy), 30 * 60 * 1000);
     } catch (error) {
       if (error instanceof LoadInProgressError) {
         return NextResponse.json(

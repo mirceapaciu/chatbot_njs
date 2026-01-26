@@ -3,6 +3,7 @@ import { VectorStoreService } from './vectorStoreService';
 import { SQLStoreService } from './sqlStoreService';
 import { embeddingService } from './embeddingService';
 import { loadCoordinator } from './loadCoordinator';
+import { ProcessLockService } from './processLockService';
 import Papa from 'papaparse';
 import path from 'path';
 import fs from 'fs/promises';
@@ -105,6 +106,13 @@ export class DataLoaderService {
       throw new LoadInProgressError();
     }
 
+    const lockService = new ProcessLockService();
+    const releaseDbLock = await lockService.tryAcquire('db_load');
+    if (!releaseDbLock) {
+      release();
+      throw new LoadInProgressError();
+    }
+
     const stats: LoadStats = {
       loaded: [],
       skipped: [],
@@ -172,7 +180,11 @@ export class DataLoaderService {
 
       return stats;
     } finally {
-      release();
+      try {
+        await releaseDbLock();
+      } finally {
+        release();
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '../supabase';
 import { FileStatus, CPIData } from '@/types';
+import { getHeartbeatIntervalSeconds } from '@/lib/services/serverInstanceService';
 
 export class SQLStoreService {
   private supabase;
@@ -168,6 +169,8 @@ export class SQLStoreService {
    * Status cleanup: reset any loading statuses back to not_loaded
    */
   async statusCleanup(): Promise<void> {
+    await this.cleanupStaleServerRows();
+
     const { error } = await this.supabase
       .from('t_file')
       .update({
@@ -179,6 +182,41 @@ export class SQLStoreService {
 
     if (error) {
       throw new Error(`Failed to reset loading statuses: ${error.message}`);
+    }
+  }
+
+  private async cleanupStaleServerRows(): Promise<void> {
+    const intervalSeconds = getHeartbeatIntervalSeconds();
+    const cutoff = new Date(Date.now() - intervalSeconds * 1000).toISOString();
+
+    const { data: staleInstances, error: staleError } = await this.supabase
+      .from('t_server_instance')
+      .select('server_instance')
+      .lt('modify_time', cutoff);
+
+    if (staleError) {
+      throw new Error(`Failed to query stale server instances: ${staleError.message}`);
+    }
+
+    const staleIds = (staleInstances ?? []).map(row => row.server_instance).filter(Boolean);
+    if (staleIds.length === 0) return;
+
+    const { error: procError } = await this.supabase
+      .from('t_process_status')
+      .delete()
+      .in('server_instance', staleIds);
+
+    if (procError) {
+      throw new Error(`Failed to delete stale process locks: ${procError.message}`);
+    }
+
+    const { error: instError } = await this.supabase
+      .from('t_server_instance')
+      .delete()
+      .in('server_instance', staleIds);
+
+    if (instError) {
+      throw new Error(`Failed to delete stale server instances: ${instError.message}`);
     }
   }
 

@@ -77,3 +77,17 @@ BEGIN
   LIMIT match_count;
 END;
 $$;
+
+-- Server instances (for cross-instance heartbeats / stale detection)
+CREATE TABLE IF NOT EXISTS t_server_instance (
+    server_instance TEXT PRIMARY KEY,
+    modify_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Process status / locks (one row per process_name globally)
+CREATE TABLE IF NOT EXISTS t_process_status (
+    process_name TEXT PRIMARY KEY,
+    server_instance TEXT NOT NULL REFERENCES t_server_instance(server_instance) ON DELETE CASCADE,
+    status TEXT NOT NULL,
+    modify_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
