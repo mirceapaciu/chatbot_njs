@@ -15,6 +15,17 @@ export class DataLoaderService {
   private vectorStore: VectorStoreService;
   private sqlStore: SQLStoreService;
 
+  private async yieldToEventLoop(): Promise<void> {
+    await new Promise<void>(resolve => {
+      // setImmediate is Node-specific; fall back to setTimeout for broader compatibility.
+      if (typeof setImmediate === 'function') {
+        setImmediate(resolve);
+      } else {
+        setTimeout(resolve, 0);
+      }
+    });
+  }
+
   constructor(
     config: DataSourcesConfig,
     vectorStore: VectorStoreService,
@@ -60,6 +71,9 @@ export class DataLoaderService {
             );
           }
         }
+
+        // Yield between files to keep the server responsive during long init.
+        await this.yieldToEventLoop();
       }
     }
   }
@@ -136,6 +150,9 @@ export class DataLoaderService {
             );
           }
         }
+
+        // Yield between files so other requests can be served.
+        await this.yieldToEventLoop();
       }
     }
 
@@ -226,6 +243,11 @@ export class DataLoaderService {
         },
       });
 
+      // Cooperative yield during long embedding loops.
+      if ((i + 1) % 2 === 0) {
+        await this.yieldToEventLoop();
+      }
+
       if ((i + 1) % progressStep === 0 || i === chunks.length - 1) {
         const progressMessage = `Loading ${i + 1}/${chunks.length}`;
         console.log(`Processed ${i + 1}/${chunks.length} chunks for ${file.name}`);
@@ -236,6 +258,9 @@ export class DataLoaderService {
           'loading',
           progressMessage
         );
+
+        // Yield after progress updates as well.
+        await this.yieldToEventLoop();
       }
     }
 
@@ -348,7 +373,11 @@ export class DataLoaderService {
    */
   private async extractPdfText(filePath: string): Promise<string> {
     const pdfBuffer = await fs.readFile(filePath);
+
+    // pdf-parse can be CPU heavy; yield before/after to reduce perceived blocking.
+    await this.yieldToEventLoop();
     const parsed = await pdfParse(pdfBuffer);
+    await this.yieldToEventLoop();
     return parsed.text || '';
   }
 
