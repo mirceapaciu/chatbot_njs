@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { DataSourcesConfig } from '@/types';
 import type { LoadPolicy } from '@/lib/services/dataLoaderService';
-import { loadCoordinator } from '@/lib/services/loadCoordinator';
 import { statusCleanupOnBoot } from '@/lib/services/statusCleanup';
 
 export const runtime = 'nodejs';
@@ -9,14 +8,6 @@ export const runtime = 'nodejs';
 void statusCleanupOnBoot();
 
 export async function POST(request: NextRequest) {
-  const release = loadCoordinator.tryAcquire();
-  if (!release) {
-    return NextResponse.json(
-      { error: 'A knowledge DB load is already in progress' },
-      { status: 409 }
-    );
-  }
-
   try {
     const body = await request.json();
     const { policy } = body as { policy: LoadPolicy };
@@ -28,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const [{ DataLoaderService }, { VectorStoreService }, { SQLStoreService }, fs, path, yaml] =
+    const [{ DataLoaderService, LoadInProgressError }, { VectorStoreService }, { SQLStoreService }, fs, path, yaml] =
       await Promise.all([
         import('@/lib/services/dataLoaderService'),
         import('@/lib/services/vectorStoreService'),
@@ -51,7 +42,18 @@ export async function POST(request: NextRequest) {
     const dataLoader = new DataLoaderService(config, vectorStore, sqlStore);
 
     // Perform the load
-    const stats = await withTimeout(dataLoader.load(policy), 5 * 60 * 1000);
+    let stats;
+    try {
+      stats = await withTimeout(dataLoader.load(policy), 5 * 60 * 1000);
+    } catch (error) {
+      if (error instanceof LoadInProgressError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 409 }
+        );
+      }
+      throw error;
+    }
 
     // If at least one file failed to load, return 500
     if (Object.keys(stats.failed).length > 0) {
@@ -68,8 +70,6 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to load data', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
-  } finally {
-    release();
   }
 }
 

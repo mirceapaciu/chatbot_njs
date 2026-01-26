@@ -2,6 +2,7 @@ import { Document, LoadStats, DataSourcesConfig, DataSourceConfig, DataFileConfi
 import { VectorStoreService } from './vectorStoreService';
 import { SQLStoreService } from './sqlStoreService';
 import { embeddingService } from './embeddingService';
+import { loadCoordinator } from './loadCoordinator';
 import Papa from 'papaparse';
 import path from 'path';
 import fs from 'fs/promises';
@@ -9,6 +10,13 @@ import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 import { CHUNK_OVERLAP, CHUNK_SIZE } from '../config';
 
 export type LoadPolicy = 'missing_only' | 'all';
+
+export class LoadInProgressError extends Error {
+  constructor(message: string = 'A knowledge DB load is already in progress') {
+    super(message);
+    this.name = 'LoadInProgressError';
+  }
+}
 
 export class DataLoaderService {
   private config: DataSourcesConfig;
@@ -92,71 +100,80 @@ export class DataLoaderService {
    * Load data based on the specified policy
    */
   async load(policy: LoadPolicy): Promise<LoadStats> {
+    const release = loadCoordinator.tryAcquire();
+    if (!release) {
+      throw new LoadInProgressError();
+    }
+
     const stats: LoadStats = {
       loaded: [],
       skipped: [],
       failed: {},
     };
 
-    await this.initializeFileStatuses();
+    try {
+      await this.initializeFileStatuses();
 
-    if (policy === 'all') {
-      await this.vectorStore.reset();
-      await this.sqlStore.resetStatuses(['vector', 'sql']);
-    }
-
-    for (const source of this.config.sources) {
-      for (const file of source.files) {
-        const fileId = `${source.id}/${file.name}`;
-        
-        try {
-          const shouldProcess = await this.shouldProcessFile(source, file, policy);
-          
-          if (!shouldProcess) {
-            stats.skipped.push(fileId);
-            continue;
-          }
-
-          const filePath = this.getFilePath(source, file);
-          
-          // Check if file exists
-          try {
-            await fs.access(filePath);
-          } catch {
-            throw new Error(`File not found: ${filePath}`);
-          }
-
-          if (file.type === 'pdf' || file.type === 'text') {
-            await this.loadTextFile(source, file, filePath);
-          } else if (file.type === 'table') {
-            await this.loadTableFile(source, file, filePath);
-          }
-
-          stats.loaded.push(fileId);
-        } catch (error) {
-          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-          stats.failed[fileId] = errorMsg;
-          console.error(`Failed to load ${fileId}:`, errorMsg);
-
-          // Update status to failed
-          const targets = this.getTargetsForFile(file);
-          for (const target of targets) {
-            await this.sqlStore.updateStatus(
-              source.id,
-              file.name,
-              target,
-              'failed',
-              errorMsg
-            );
-          }
-        }
-
-        // Yield between files so other requests can be served.
-        await this.yieldToEventLoop();
+      if (policy === 'all') {
+        await this.vectorStore.reset();
+        await this.sqlStore.resetStatuses(['vector', 'sql']);
       }
-    }
 
-    return stats;
+      for (const source of this.config.sources) {
+        for (const file of source.files) {
+          const fileId = `${source.id}/${file.name}`;
+
+          try {
+            const shouldProcess = await this.shouldProcessFile(source, file, policy);
+
+            if (!shouldProcess) {
+              stats.skipped.push(fileId);
+              continue;
+            }
+
+            const filePath = this.getFilePath(source, file);
+
+            // Check if file exists
+            try {
+              await fs.access(filePath);
+            } catch {
+              throw new Error(`File not found: ${filePath}`);
+            }
+
+            if (file.type === 'pdf' || file.type === 'text') {
+              await this.loadTextFile(source, file, filePath);
+            } else if (file.type === 'table') {
+              await this.loadTableFile(source, file, filePath);
+            }
+
+            stats.loaded.push(fileId);
+          } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+            stats.failed[fileId] = errorMsg;
+            console.error(`Failed to load ${fileId}:`, errorMsg);
+
+            // Update status to failed
+            const targets = this.getTargetsForFile(file);
+            for (const target of targets) {
+              await this.sqlStore.updateStatus(
+                source.id,
+                file.name,
+                target,
+                'failed',
+                errorMsg
+              );
+            }
+          }
+
+          // Yield between files so other requests can be served.
+          await this.yieldToEventLoop();
+        }
+      }
+
+      return stats;
+    } finally {
+      release();
+    }
   }
 
   /**

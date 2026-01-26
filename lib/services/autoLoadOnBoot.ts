@@ -1,5 +1,4 @@
 import type { DataSourcesConfig } from '@/types';
-import { loadCoordinator } from '@/lib/services/loadCoordinator';
 
 let hasRun = false;
 
@@ -33,12 +32,6 @@ export async function autoLoadOnBoot(): Promise<void> {
   if (hasRun) return;
   hasRun = true;
 
-  const release = loadCoordinator.tryAcquire();
-  if (!release) {
-    console.log('[boot] autoLoadOnBoot: skipped (lock busy)');
-    return;
-  }
-
   try {
     console.log('[boot] autoLoadOnBoot: starting');
     const [vectorStoreModule, sqlStoreModule] = await Promise.all([
@@ -64,23 +57,29 @@ export async function autoLoadOnBoot(): Promise<void> {
       return;
     }
 
-    const { DataLoaderService } = await import('@/lib/services/dataLoaderService');
+    const { DataLoaderService, LoadInProgressError } = await import('@/lib/services/dataLoaderService');
 
     const config = await loadDataSourcesConfig();
     const vectorStoreService = new vectorStoreModule.VectorStoreService();
     const sqlStoreService = new sqlStoreModule.SQLStoreService();
     const dataLoader = new DataLoaderService(config, vectorStoreService, sqlStoreService);
 
-    await withTimeout(
-      dataLoader.load('all'),
-      5 * 60 * 1000,
-      'Auto-load timed out'
-    );
+    try {
+      await withTimeout(
+        dataLoader.load('all'),
+        5 * 60 * 1000,
+        'Auto-load timed out'
+      );
+    } catch (error) {
+      if (error instanceof LoadInProgressError) {
+        console.log('[boot] autoLoadOnBoot: skipped (load already in progress)');
+        return;
+      }
+      throw error;
+    }
 
     console.log('[boot] autoLoadOnBoot: completed');
   } catch (error) {
     console.error('Auto-load on boot failed:', error);
-  } finally {
-    release();
   }
 }
