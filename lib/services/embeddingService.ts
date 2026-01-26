@@ -1,5 +1,5 @@
 /**
- * Embedding service using Hugging Face Inference client
+ * Embedding service using Xenova Transformers for local embedding generation.
  * This provides embeddings compatible with the sentence-transformers library
  */
 
@@ -31,7 +31,7 @@ export class EmbeddingService {
   }
 
   /**
-   * Normalize Hugging Face output to a single embedding vector
+   * Normalize to a single embedding vector
    */
   private normalizeEmbedding(embedding: FeatureExtractionOutput): number[] {
     if (!Array.isArray(embedding) || embedding.length === 0) {

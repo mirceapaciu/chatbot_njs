@@ -26,7 +26,6 @@
 - **Supabase** - Backend-as-a-Service
   - PostgreSQL with pgvector extension
 - **OpenAI API** - GPT-4o-mini for chat completions and function calling
-- **HuggingFace API** - Sentence transformers for embeddings
 
 ### Data Sources
 - IMF World Economic Outlook
@@ -73,9 +72,6 @@ Edit `.env.local` with your credentials:
 ```env
 # OpenAI Configuration
 OPENAI_API_KEY=sk-your-openai-api-key
-
-# HuggingFace Configuration
-HUGGINGFACE_API_KEY=hf_your-huggingface-api-key
 
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -190,7 +186,6 @@ This Next.js app can be deployed to any platform that supports Node.js:
 
 - **File not found**: Verify data files are in the correct directory structure
 - **Parse errors**: Check CSV format matches expected columns
-- **Embedding timeouts**: HuggingFace API may need warmup time
 
 ## Development
 
