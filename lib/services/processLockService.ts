@@ -1,6 +1,9 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { startServerInstance } from '@/lib/services/serverInstanceService';
 
+// This service implements a distributed process lock using the database.
+// It allows only one server instance to hold the lock for a given process name at a time.
+
 export type ReleaseFn = () => Promise<void>;
 
 function isConflictError(error: unknown): boolean {

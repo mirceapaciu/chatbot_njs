@@ -1,5 +1,6 @@
 type ReleaseFn = () => void;
 
+// Simple in-memory load coordinator to prevent concurrent DB loads within the same server instance.
 class LoadCoordinator {
   private inProgress = false;
 

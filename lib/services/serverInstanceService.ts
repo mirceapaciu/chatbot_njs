@@ -1,3 +1,11 @@
+/**
+ * This module manages the lifecycle of a server instance in a distributed system.
+ * It handles server instance registration, periodic heartbeats to maintain its presence,
+ * and cleanup during shutdown. The server instance information is stored in the 
+ * `t_server_instance` table in the database, and this module ensures that the instance 
+ * is properly tracked and updated.
+ */
+
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 const GLOBAL_KEY = '__chatbot_server_instance__';
