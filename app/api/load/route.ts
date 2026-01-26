@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { DataSourcesConfig } from '@/types';
 import type { LoadPolicy } from '@/lib/services/dataLoaderService';
-import { statusCleanupOnBoot } from '@/lib/services/statusCleanup';
 
 export const runtime = 'nodejs';
-
-void statusCleanupOnBoot();
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
 import { VectorStoreService } from '@/lib/services/vectorStoreService';
 import { SQLStoreService } from '@/lib/services/sqlStoreService';
-import { statusCleanupOnBoot } from '@/lib/services/statusCleanup';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-
-void statusCleanupOnBoot();
 
 export async function GET() {
   try {
