@@ -20,6 +20,8 @@ export default function Home() {
   const [statusRefreshToken, setStatusRefreshToken] = useState(0);
   const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
   const [knowledgeLoading, setKnowledgeLoading] = useState(false);
+  const [dbLoadRunning, setDbLoadRunning] = useState(false);
+  const [dbIsLoaded, setDbIsLoaded] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -45,6 +47,7 @@ export default function Home() {
 
 
   const handleSend = async () => {
+    if (!dbIsLoaded) return;
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -228,6 +231,8 @@ export default function Home() {
                 refreshToken={statusRefreshToken}
                 showLoadButton={false}
                 showFileTable={false}
+                onDbLoadRunningChange={setDbLoadRunning}
+                onDbLoadedChange={setDbIsLoaded}
               />
             </div>
 
@@ -288,11 +293,11 @@ export default function Home() {
                     placeholder="Ask me anything about the world economic situation..."
                     className="flex-1 border border-gray-300 rounded-lg px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={2}
-                    disabled={isLoading}
+                    disabled={isLoading || !dbIsLoaded}
                   />
                   <button
                     onClick={handleSend}
-                    disabled={isLoading || !input.trim()}
+                    disabled={isLoading || !dbIsLoaded || !input.trim()}
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                   >
                     Send
@@ -313,8 +318,10 @@ export default function Home() {
                 showLoadButton={false}
                 showFileTable
                 showKnowledgeActions
-                forcePolling={knowledgeLoading}
-                disableKnowledgeActions={knowledgeLoading}
+                forcePolling={knowledgeLoading || dbLoadRunning}
+                disableKnowledgeActions={knowledgeLoading || dbLoadRunning}
+                onDbLoadRunningChange={setDbLoadRunning}
+                onDbLoadedChange={setDbIsLoaded}
               />
             </div>
           </div>

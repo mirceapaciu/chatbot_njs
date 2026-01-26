@@ -1,5 +1,4 @@
 import { getSupabaseAdmin } from '@/lib/supabase';
-import crypto from 'crypto';
 
 const GLOBAL_KEY = '__chatbot_server_instance__';
 
@@ -50,12 +49,12 @@ function generateServerInstanceId(): string {
     return envId.trim();
   }
 
-  try {
-    return crypto.randomUUID();
-  } catch {
-    // Fallback for older runtimes.
-    return `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const anyGlobal = globalThis as unknown as { crypto?: { randomUUID?: () => string } };
+  if (anyGlobal.crypto?.randomUUID) {
+    return anyGlobal.crypto.randomUUID();
   }
+
+  return `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 async function upsertServerInstanceModifyTime(serverInstanceId: string): Promise<void> {

@@ -14,6 +14,8 @@ interface StatusPanelProps {
   showKnowledgeActions?: boolean;
   forcePolling?: boolean;
   disableKnowledgeActions?: boolean;
+  onDbLoadRunningChange?: (isRunning: boolean) => void;
+  onDbLoadedChange?: (isLoaded: boolean) => void;
 }
 
 const StatusRow = memo(function StatusRow({
@@ -75,10 +77,13 @@ export default function StatusPanel({
   showKnowledgeActions = false,
   forcePolling = false,
   disableKnowledgeActions = false,
+  onDbLoadRunningChange,
+  onDbLoadedChange,
 }: StatusPanelProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbLoadRunning, setDbLoadRunning] = useState(false);
   const initialFetchDoneRef = useRef(false);
   const lastRefreshTokenRef = useRef<number | undefined>(undefined);
 
@@ -119,7 +124,24 @@ export default function StatusPanel({
       // Fetch vector store status
       const vectorResponse = await fetch('/api/vector-status', { cache: 'no-store' });
       const vectorData = await vectorResponse.json();
-      setIsLoaded(vectorData.isLoaded);
+      const nextIsLoaded = Boolean(vectorData.isLoaded);
+      setIsLoaded((prev) => {
+        if (prev !== nextIsLoaded) {
+          onDbLoadedChange?.(nextIsLoaded);
+        }
+        return nextIsLoaded;
+      });
+
+      // Fetch process status (DB load lock)
+      const processResponse = await fetch('/api/process-status', { cache: 'no-store' });
+      const processData = await processResponse.json();
+      const nextDbLoadRunning = Boolean(processData.dbLoadRunning);
+      setDbLoadRunning((prev) => {
+        if (prev !== nextDbLoadRunning) {
+          onDbLoadRunningChange?.(nextDbLoadRunning);
+        }
+        return nextDbLoadRunning;
+      });
 
       // Fetch file statuses
       const statusResponse = await fetch('/api/status', { cache: 'no-store' });
@@ -143,7 +165,7 @@ export default function StatusPanel({
     } catch (error) {
       console.error('Failed to fetch status:', error);
     }
-  }, [areStatusesEqual, getStatusKey]);
+  }, [areStatusesEqual, getStatusKey, onDbLoadRunningChange, onDbLoadedChange]);
 
   useEffect(() => {
     const tokenValue = refreshToken ?? 0;
@@ -171,8 +193,8 @@ export default function StatusPanel({
   }, [fetchStatus, refreshToken]);
 
   const hasLoading = useMemo(
-    () => showFileTable && statuses.some((status) => status.status === 'loading'),
-    [showFileTable, statuses]
+    () => dbLoadRunning || (showFileTable && statuses.some((status) => status.status === 'loading')),
+    [dbLoadRunning, showFileTable, statuses]
   );
 
   useEffect(() => {
@@ -197,6 +219,13 @@ export default function StatusPanel({
         <div className="flex items-center gap-2">
           <span className={`inline-block w-3 h-3 rounded-full ${isLoaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
           <span className="text-sm">{isLoaded ? 'DB is loaded' : 'DB is empty'}</span>
+        </div>
+
+        <div className="mt-2 flex items-center gap-2">
+          <span className={`inline-block w-3 h-3 rounded-full ${dbLoadRunning ? 'bg-blue-500' : 'bg-gray-300'}`}></span>
+          <span className="text-sm">
+            DB Load: {dbLoadRunning ? 'Loading' : 'Idle'}
+          </span>
         </div>
       </div>
 

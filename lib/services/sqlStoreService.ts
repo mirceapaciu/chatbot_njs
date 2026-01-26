@@ -233,4 +233,21 @@ export class SQLStoreService {
       throw new Error(`Failed to clear CPI data: ${error.message}`);
     }
   }
+
+  /**
+   * Returns true if a process lock row exists in t_process_status.
+   */
+  async isProcessRunning(processName: string): Promise<boolean> {
+    const { data, error } = await this.supabase
+      .from('t_process_status')
+      .select('process_name')
+      .eq('process_name', processName)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to query process status (${processName}): ${error.message}`);
+    }
+
+    return Boolean(data);
+  }
 }
