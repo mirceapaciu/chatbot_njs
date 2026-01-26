@@ -21,7 +21,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'chat' | 'knowledge'>('chat');
   const [knowledgeLoading, setKnowledgeLoading] = useState(false);
   const [dbLoadRunning, setDbLoadRunning] = useState(false);
-  const [dbIsLoaded, setDbIsLoaded] = useState(true);
+  const [dbIsLoaded, setDbIsLoaded] = useState<boolean | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -47,7 +47,7 @@ export default function Home() {
 
 
   const handleSend = async () => {
-    if (!dbIsLoaded) return;
+    if (dbIsLoaded === false) return;
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
@@ -293,11 +293,11 @@ export default function Home() {
                     placeholder="Ask me anything about the world economic situation..."
                     className="flex-1 border border-gray-300 rounded-lg px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={2}
-                    disabled={isLoading || !dbIsLoaded}
+                    disabled={isLoading || dbIsLoaded === false}
                   />
                   <button
                     onClick={handleSend}
-                    disabled={isLoading || !dbIsLoaded || !input.trim()}
+                    disabled={isLoading || dbIsLoaded === false || !input.trim()}
                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                   >
                     Send

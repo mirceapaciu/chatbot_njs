@@ -80,7 +80,7 @@ export default function StatusPanel({
   onDbLoadRunningChange,
   onDbLoadedChange,
 }: StatusPanelProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState<boolean | null>(null);
   const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [dbLoadRunning, setDbLoadRunning] = useState(false);
@@ -217,8 +217,14 @@ export default function StatusPanel({
     <div className="w-full h-full bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">      
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          <span className={`inline-block w-3 h-3 rounded-full ${isLoaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
-          <span className="text-sm">{isLoaded ? 'DB is loaded' : 'DB is empty'}</span>
+          {isLoaded === null ? (
+            <span className="text-sm text-gray-600">DB status - unknown</span>
+          ) : (
+            <>
+              <span className={`inline-block w-3 h-3 rounded-full ${isLoaded ? 'bg-green-500' : 'bg-red-500'}`}></span>
+              <span className="text-sm">{isLoaded ? 'DB is loaded' : 'DB is empty'}</span>
+            </>
+          )}
         </div>
 
         <div className="mt-2 flex items-center gap-2">
@@ -229,7 +235,7 @@ export default function StatusPanel({
         </div>
       </div>
 
-      {!isLoaded && (
+      {isLoaded === false && (
         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm">
           ⚠️ The knowledge DB is empty. Load documents to enable the chat interface.
         </div>
