@@ -232,30 +232,44 @@ export class DataLoaderService {
     filePath: string
   ): Promise<void> {
     console.log(`Loading text file: ${filePath}`);
-    
-    // Read file content
-    const content = file.type === 'pdf'
-      ? await this.extractPdfText(filePath)
-      : await fs.readFile(filePath, 'utf-8');
-    
-    // Chunk the content (simplified version - you may want to use a proper chunking library)
-    const chunks = this.chunkText(content, CHUNK_SIZE, CHUNK_OVERLAP);
+
+    const chunkEntries: Array<{ chunk: string; pageNumber: number }> = [];
+
+    if (file.type === 'pdf') {
+      const pages = await this.extractPdfPages(filePath);
+      pages.forEach((page) => {
+        const pageChunks = this.chunkText(page.text, CHUNK_SIZE, CHUNK_OVERLAP);
+        pageChunks.forEach((chunk) => {
+          if (chunk.trim().length > 0) {
+            chunkEntries.push({ chunk, pageNumber: page.pageNumber });
+          }
+        });
+      });
+    } else {
+      const content = await fs.readFile(filePath, 'utf-8');
+      const chunks = this.chunkText(content, CHUNK_SIZE, CHUNK_OVERLAP);
+      chunks.forEach((chunk) => {
+        if (chunk.trim().length > 0) {
+          chunkEntries.push({ chunk, pageNumber: 1 });
+        }
+      });
+    }
 
     await this.sqlStore.updateStatus(
       source.id,
       file.name,
       'vector',
       'loading',
-      `Loading 0/${chunks.length}`
+      `Loading 0/${chunkEntries.length}`
     );
 
     // Create documents with metadata
     const documents: Document[] = [];
-    
-    const progressStep = Math.max(1, Math.floor(chunks.length / 20));
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
+    const progressStep = Math.max(1, Math.floor(chunkEntries.length / 20));
+
+    for (let i = 0; i < chunkEntries.length; i++) {
+      const { chunk, pageNumber } = chunkEntries[i];
       const embedding = await embeddingService.embedText(chunk);
       
       documents.push({
@@ -267,7 +281,7 @@ export class DataLoaderService {
           file_name: file.name,
           url: file.url,
           year: file.year,
-          page_number: i + 1, // Simplified page tracking
+          page_number: pageNumber,
           loaded_date: new Date().toISOString(),
         },
       });
@@ -277,9 +291,9 @@ export class DataLoaderService {
         await this.yieldToEventLoop();
       }
 
-      if ((i + 1) % progressStep === 0 || i === chunks.length - 1) {
-        const progressMessage = `Loading ${i + 1}/${chunks.length}`;
-        console.log(`Processed ${i + 1}/${chunks.length} chunks for ${file.name}`);
+      if ((i + 1) % progressStep === 0 || i === chunkEntries.length - 1) {
+        const progressMessage = `Loading ${i + 1}/${chunkEntries.length}`;
+        console.log(`Processed ${i + 1}/${chunkEntries.length} chunks for ${file.name}`);
         await this.sqlStore.updateStatus(
           source.id,
           file.name,
@@ -398,16 +412,32 @@ export class DataLoaderService {
   }
 
   /**
-   * Extract text from a PDF file
+   * Extract text per page from a PDF file
    */
-  private async extractPdfText(filePath: string): Promise<string> {
+  private async extractPdfPages(filePath: string): Promise<Array<{ pageNumber: number; text: string }>> {
     const pdfBuffer = await fs.readFile(filePath);
+    const pages: Array<{ pageNumber: number; text: string }> = [];
 
     // pdf-parse can be CPU heavy; yield before/after to reduce perceived blocking.
     await this.yieldToEventLoop();
-    const parsed = await pdfParse(pdfBuffer);
+    const parsed = await pdfParse(pdfBuffer, {
+      pagerender: (pageData: any) =>
+        pageData.getTextContent().then((textContent: any) => {
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ');
+          pages.push({ pageNumber: pageData.pageIndex + 1, text: pageText });
+          return pageText;
+        }),
+    });
     await this.yieldToEventLoop();
-    return parsed.text || '';
+
+    if (pages.length === 0 && parsed?.text) {
+      pages.push({ pageNumber: 1, text: parsed.text });
+    }
+
+    pages.sort((a, b) => a.pageNumber - b.pageNumber);
+    return pages;
   }
 
   /**
