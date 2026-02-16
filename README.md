@@ -43,7 +43,6 @@
 ### 1. Install Dependencies
 
 ```bash
-cd nextjs-migration
 npm install
 ```
 
